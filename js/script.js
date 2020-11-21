@@ -28,6 +28,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
             this.pomme.supprimePomme();
             this.pomme=undefined;
             }
+            if (this.serpent !== undefined){
+                this.serpent.supprimeSerpent();
+                this.serpent=undefined;
+            }
         }
 
         affichagePointage(_lePointage) {
@@ -42,26 +46,101 @@ document.addEventListener("DOMContentLoaded", function(event) {
             console.log("creation serpent");
 
             this.leJeu=_leJeu;
+
+            this.currentX=-1;
+            this.currentY=0;
+
+            this.nextMoveX=1;
+            this.nextMoveY=0;
+
+            this.serpentLongueur=1;
+            this.tblCarreSerpent=[];
+            this.vitesse=250;
+            this.timing=setInterval(this.controleSerpent.bind(this), this.vitesse);
+
+            this.touche=false;
+
+            document.addEventListener('keydown', this.verifTouche.bind(this));
         }
 
-        verifTouche(evt){
-
+        verifTouche(_evt){
+            this.deplacement(_evt.keyCode);
         }
 
         deplacement(dirCode){
-
+            switch (dirCode){
+                case 37:
+                    this.nextMoveX=-1;
+                    this.nextMoveY=0;
+                    break;
+                case 38:
+                    this.nextMoveX=0;
+                    this.nextMoveY=-1;
+                    break;
+                case 39:
+                    this.nextMoveX=1;
+                    this.nextMoveY=0;
+                    break;
+                case 40:
+                    this.nextMoveX=0;
+                    this.nextMoveY=1;
+                    break;
+            }
         }
 
         controleSerpent(){
+            var nextX=this.currentX+this.nextMoveX;
+            var nextY=this.currentY+this.nextMoveY;
 
+            this.tblCarreSerpent.forEach(function(element){
+                if (nextX === element[1] && nextY === element[2]){
+                    console.log('Touche moi-meme');
+                    this.leJeu.finPartie();
+                    this.touche=true;
+                }
+            }.bind(this));
+
+            if (nextY < 0 || nextX < 0 || nextY > this.leJeu.grandeurGrille-1 || nextX > this.leJeu.grandeurGrille-1){
+
+                console.log('Touche limite');
+                this.leJeu.finPartie();
+                this.touche=true;
+            }
+
+            if (!this.touche) {
+                if (this.currentX === this.leJeu.pomme.pomme[1] && this.currentY === this.leJeu.pomme.pomme[2]){
+                    this.serpentLongueur++;
+
+                    this.leJeu.affichagePointage(this.serpentLongueur);
+
+                    this.leJeu.pomme.supprimePomme();
+                    this.leJeu.pomme.ajoutePomme();
+                }
+
+                this.dessineCarre(nextX, nextY);
+                this.currentX = nextX;
+                this.currentY = nextY;
+            }
         }
 
         dessineCarre(x, y){
+            var unCarre=[this.leJeu.s.rect(x * this.leJeu.grandeurCarre,y * this.leJeu.grandeurCarre,this.leJeu.grandeurCarre,this.leJeu.grandeurCarre),x,y];
 
+            this.tblCarreSerpent.push(unCarre);
+
+            if(this.tblCarreSerpent.length>this.serpentLongueur){
+                this.tblCarreSerpent[0][0].remove();
+                this.tblCarreSerpent.shift();
+            }
         }
 
         supprimeSerpent(){
+            clearInterval(this.timing);
 
+            while(this.tblCarreSerpent.length > 0){
+                this.tblCarreSerpent[0][0].remove();
+                this.tblCarreSerpent.shift();
+            }
         }
     }
 
